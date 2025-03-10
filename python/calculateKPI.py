@@ -55,7 +55,7 @@ def save_results(results):
 
 # Exécution du script
 if __name__ == "__main__":
-    path = "./cleaned_data1.csv"
+    path = "./result_csv/cleaned_data.csv"
     df = load_data(path)
     results = compute_kpis(df)
     save_results(results)
