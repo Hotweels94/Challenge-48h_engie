@@ -5,49 +5,31 @@ import json
 import os
 from config import MISTRAL_API_KEY, MISTRAL_API_URL
 
+# Paramètres d'optimisation
+DEBUG = True
+SAVE_INTERVAL = 5  # Nombre de tweets après lesquels on sauvegarde le fichier
+
 def analyze():
-    # 📌 Vérifier si la clé API est bien chargée
     if not MISTRAL_API_KEY:
         print("❌ ERREUR : La clé API Mistral n'est pas définie ! Vérifie `config.py`.")
         exit()
 
-    print(f"🔍 Clé API chargée : {MISTRAL_API_KEY[:10]}... (masquée)")
     print("✅ Configuration chargée, démarrage de l'analyse des tweets...")
 
-    # 📌 Charger les tweets depuis le fichier CSV
+    # 📂 Charger les tweets
     file_path = "./result_csv/cleaned_data.csv"
-    print(f"📂 Chargement du fichier : {file_path}")
-
     try:
-        df = pd.read_csv(file_path, sep=";", encoding="utf-8", on_bad_lines="skip")
+        df = pd.read_csv(file_path, sep=";", encoding="utf-8", on_bad_lines="skip", dtype={"score_inconfort": "Int64"})
         print(f"📊 Nombre de tweets détectés : {len(df)}")
-        print(f"📝 Colonnes détectées : {list(df.columns)}")
     except Exception as e:
         print(f"❌ ERREUR : Impossible de lire le fichier CSV : {e}")
         exit()
 
-    # 📌 Vérifier que la colonne "full_text" existe
-    if "full_text" not in df.columns:
-        print("❌ Erreur : La colonne 'full_text' n'existe pas dans le fichier CSV.")
-        print(f"Colonnes disponibles : {df.columns}")
-        exit()
+    # 📌 Vérifier et ajouter les colonnes manquantes
+    for col in ["sentiment", "categorie_reclamation", "score_inconfort"]:
+        if col not in df.columns:
+            df[col] = "" if col != "score_inconfort" else 0
 
-    # 📌 Ajouter ou réinitialiser les colonnes si elles n'existent pas
-    if "sentiment" not in df.columns:
-        df["sentiment"] = ""
-    if "categorie_reclamation" not in df.columns:
-        df["categorie_reclamation"] = ""
-    if "score_inconfort" not in df.columns:
-        df["score_inconfort"] = 0
-
-    # 📌 Forcer l'analyse en vidant les colonnes (pour éviter de sauter des tweets)
-    df["sentiment"] = ""
-    df["categorie_reclamation"] = ""
-    df["score_inconfort"] = 0
-    df.to_csv(file_path, sep=";", index=False)
-    print("✅ Colonnes `sentiment`, `categorie_reclamation` et `score_inconfort` réinitialisées.")
-
-    # 📌 Fonction pour analyser un tweet avec Mistral
     def analyze_tweet(tweet_text):
         headers = {
             "Authorization": f"Bearer {MISTRAL_API_KEY}",
@@ -81,66 +63,70 @@ def analyze():
         }
 
         try:
-            # Envoi de la requête API à Mistral
             response = requests.post(MISTRAL_API_URL, json=payload, headers=headers)
-            print(f"🔍 Statut de la réponse : {response.status_code}")
-            
+
             if response.status_code != 200:
-                print(f"❌ ERREUR : Requête échouée. Code : {response.status_code}, Message : {response.text}")
+                if DEBUG:
+                    print(f"❌ ERREUR API : {response.status_code}, {response.text}")
                 return "Erreur", "Autre", 50
 
-            response_text = response.text.strip()
-
-            # Affichage propre du JSON
-            print("\n🔍 Réponse brute Mistral :")
-            print(json.dumps(json.loads(response_text), indent=4, ensure_ascii=False))  # Beautify JSON
-
-            # Vérification du JSON retourné
-            response_data = json.loads(response_text)
+            response_data = json.loads(response.text)
             choices = response_data.get("choices", [])
-
             if not choices:
-                print("❌ Mistral n'a retourné aucune réponse !")
                 return "Erreur", "Autre", 50
 
-            # Extraire et vérifier la réponse
             model_response = choices[0].get("message", {}).get("content", "").strip()
-            a = model_response.split("{")
-            b = a[1].split("}")
-            model_response = "{" + b[0] + "}"
 
-            if not model_response.startswith("{"):
-                print(f"❌ Réponse non formatée en JSON : {model_response}")
-                return "Erreur", "Autre", 50
+            if model_response.startswith("```json") and model_response.endswith("```"):
+                model_response = model_response[7:-3].strip()
 
             json_response = json.loads(model_response)
-            sentiment = json_response.get("sentiment", "Neutre").strip()
-            category = json_response.get("categorie", "Autre").strip()
-            discomfort_score = json_response.get("score_inconfort", 50)
-
-            return sentiment, category, discomfort_score
+            return json_response.get("sentiment", "Neutre"), json_response.get("categorie", "Autre"), json_response.get("score_inconfort", 50)
 
         except Exception as e:
-            print(f"❌ ERREUR API Mistral : {e}")
+            if DEBUG:
+                print(f"❌ ERREUR API Mistral : {e}")
             return "Erreur", "Autre", 50
 
-    # 📌 Boucle pour analyser chaque tweet
     print("🚀 Début de l'analyse des tweets...")
 
-    for index, row in df.iterrows():
-        print(f"📨 Analyse du tweet {index + 1}/{len(df)} : {row['full_text'][:50]}...")
+    results = []
+    try:
+        for index, row in df.iterrows():
+            if (
+                pd.isna(row["sentiment"]) or row["sentiment"] == "" or row["sentiment"] == "Erreur" or
+                pd.isna(row["categorie_reclamation"]) or row["categorie_reclamation"] == "" or row["categorie_reclamation"] == "Autre" or
+                pd.isna(row["score_inconfort"]) or row["score_inconfort"] == 0 or row["score_inconfort"] == 50
+            ):
+                if DEBUG:
+                    print(f"📨 Analyse du tweet {index + 1}/{len(df)} : {row['full_text'][:50]}...")
 
-        sentiment, category, discomfort_score = analyze_tweet(row["full_text"])
+                sentiment, category, discomfort_score = analyze_tweet(row["full_text"])
+                results.append((index, sentiment, category, discomfort_score))
 
-        # 📌 Mise à jour du DataFrame
-        df.at[index, "sentiment"] = sentiment
-        df.at[index, "categorie_reclamation"] = category
-        df.at[index, "score_inconfort"] = discomfort_score
+                # Sauvegarde intermédiaire tous les N tweets
+                if len(results) >= SAVE_INTERVAL:
+                    for idx, sent, cat, score in results:
+                        df.at[idx, "sentiment"] = sent
+                        df.at[idx, "categorie_reclamation"] = cat
+                        df.at[idx, "score_inconfort"] = score
+                    df.to_csv(file_path, sep=";", index=False)
+                    results = []  # Réinitialiser les résultats
+                    print("💾 Sauvegarde intermédiaire effectuée.")
 
-        # 📌 Sauvegarde intermédiaire après chaque tweet
-        df.to_csv(file_path, sep=";", index=False)
+                time.sleep(2)  # Pause pour éviter surcharge API
 
-        # 📌 Pause pour éviter la surcharge de l'API
-        time.sleep(2)
+        # Dernière sauvegarde après la boucle
+        if results:
+            for idx, sent, cat, score in results:
+                df.at[idx, "sentiment"] = sent
+                df.at[idx, "categorie_reclamation"] = cat
+                df.at[idx, "score_inconfort"] = score
+            df.to_csv(file_path, sep=";", index=False)
+            print("💾 Sauvegarde finale effectuée.")
 
-    print("✅ Analyse terminée, résultats enregistrés dans le fichier CSV.")
+        print("✅ Analyse terminée, résultats enregistrés dans le fichier CSV.")
+
+    except Exception as e:
+        print(f"❌ ERREUR INATTENDUE : {e}")
+

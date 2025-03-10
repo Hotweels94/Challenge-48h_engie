@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def calculateKPI():
     # Charger les données
     def load_data(path):
@@ -16,27 +15,27 @@ def calculateKPI():
         df['day'] = df['created_at'].dt.date
         df['week'] = df['created_at'].dt.to_period('W').astype(str)
         df['month'] = df['created_at'].dt.to_period('M').astype(str)
-        
+
         # Nombre de tweets par jour, semaine, mois
         tweets_per_day = df.groupby('day').size().reset_index(name='Tweets par jour')
         tweets_per_week = df.groupby('week').size().reset_index(name='Tweets par semaine')
         tweets_per_month = df.groupby('month').size().reset_index(name='Tweets par mois')
-        
+
         # Fréquence des mentions des comptes Engie
         df['mentions'] = df['full_text'].str.findall(r'@\w+')
         mentions_exploded = df.explode('mentions')
         mentions_count = mentions_exploded['mentions'].value_counts().reset_index()
         mentions_count.columns = ['Compte', 'Nombre de mentions']
-        
+
         # Détection des tweets contenant des mots-clés critiques
         keywords = ["délai", "panne", "urgence", "scandale", "facture", "service", "bug", "erreur", "problème", "soucis", "coupure", "technique", "arrêt", "dysfonctionnement", "bugs", "paiement", "attente", "devis", "relance", "résilier"]
         df['contains_critical_keywords'] = df['full_text'].apply(lambda x: any(kw in x.lower() for kw in keywords))
-        
+
         tweets_with_keywords = df[df['contains_critical_keywords']]
         tweets_per_day_keywords = tweets_with_keywords.groupby('day').size().reset_index(name='Mots-clés par jour')
         tweets_per_week_keywords = tweets_with_keywords.groupby('week').size().reset_index(name='Mots-clés par semaine')
         tweets_per_month_keywords = tweets_with_keywords.groupby('month').size().reset_index(name='Mots-clés par mois')
-        
+
         # Fusion des résultats
         results = {
             'tweets_per_day': tweets_per_day,
@@ -47,7 +46,7 @@ def calculateKPI():
             'tweets_per_week_keywords': tweets_per_week_keywords,
             'tweets_per_month_keywords': tweets_per_month_keywords,
         }
-        
+
         return results
 
     # Sauvegarde des résultats
