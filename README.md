@@ -4,7 +4,13 @@ Challenge 48h made by : Ait Atmane Samir / Amrane Adam / Wouhaibi Mahdi / Gerard
 
 ## How to launch the project : 
 
-First, you have to clone or download this repository. After you need to type in your terminal where you clone / download the project : ```python python/main.py```
+First, you have to clone or download this repository. 
+Next you will need to install depedencies : 
+``` pip install pandas ```
+``` pip install streamlit ```
+``` pip install matplotlib ```
+``` pip install seaborn ```
+After you need to type in your terminal where you clone / download the project : ```python python/main.py```
 To have the visualization you need to type : ```streamlit run python\visualize_KPI.py```
 
 ## Methodology used for processing tweets
@@ -18,4 +24,14 @@ In this project, the tweet data is processed through several key steps to ensure
 4-Finally, any duplicate rows are removed from the dataset to ensure that each tweet is unique, preventing potential bias in the analysis or model results. This is done by identifying and removing exact duplicates from the data.
 
 Overall, these steps help ensure that the tweet data is cleaned, consistent, and ready for further processing( sentiment analysis, generating responses).
+
+## The KPIs selected and their meaning
+
+We have several KPIs: 
+- Tweets by day, week, and month, to detect the various dates where we record activity
+- Tweets by day, week, and month containing keywords that we have defined to understand the problem of the tweet, to detect the problems perceived by users by date.
+- The frequency of mentions of Twitter accounts, to make links between Engie accounts and other companies, to see if there are problems with other companies.
+- The sentiment of the tweet, to know if the tweets are rather positive or negative.
+- The problem category.
+- The discomfort score to prioritize the user's discomfort.
 
