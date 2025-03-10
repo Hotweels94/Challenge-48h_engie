@@ -8,3 +8,14 @@ First, you have to clone or download this repository. After you need to type in 
 To have the visualization you need to type : ```streamlit run python\visualize_KPI.py```
 
 ## Methodology used for processing tweets
+
+In this project, the tweet data is processed through several key steps to ensure the data is clean and ready for analysis or generating responses. 1-The first step involves converting the created_at column, which contains the tweet timestamps, into UTC datetime format using pandas. This ensures consistency across all timestamps, making it easier to work with the data for time-based analysis.
+
+2-Next, irrelevant columns such as id, screen_name, and name are dropped from the dataset. These columns are not necessary for the analysis and could contain sensitive or unnecessary information that does not contribute to the purpose of the analysis.
+
+3-The third step focuses on cleaning the text data in the full_text column, which contains the actual tweet content. Several transformations are applied here. Emojis and non-ASCII characters are removed to avoid any unwanted symbols that may interfere with text processing. URLs (e.g., http:// or https://) are also removed to focus solely on the content of the tweet. Additionally, the text is converted to lowercase, and multiple spaces are replaced with a single space to standardize the formatting. These cleaning steps are crucial for ensuring that the text is in a consistent format for further analysis.
+
+4-Finally, any duplicate rows are removed from the dataset to ensure that each tweet is unique, preventing potential bias in the analysis or model results. This is done by identifying and removing exact duplicates from the data.
+
+Overall, these steps help ensure that the tweet data is cleaned, consistent, and ready for further processing( sentiment analysis, generating responses).
+
