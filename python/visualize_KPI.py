@@ -12,13 +12,13 @@ def filter_low_values_day(df, threshold=3):
     return df[df['Nombre de mentions'] > threshold] if 'Nombre de mentions' in df.columns else df[df.iloc[:, 1] > threshold]
 
 # Fonction pour filtrer les faibles valeurs par semaine
-def filter_low_values_week(df, threshold=15):
+def filter_low_values_week(df, threshold=10):
     return df[df['Nombre de mentions'] > threshold] if 'Nombre de mentions' in df.columns else df[df.iloc[:, 1] > threshold]
 
 # Fonction pour créer un graphique en pie
 def plot_pie(df, title):
     # Regroupe les faibles valeurs dans la catégorie "Autres"
-    df['Compte'] = df['Compte'].apply(lambda x: x if df['Nombre de mentions'][df['Compte'] == x].sum() > 5 else 'Autres')
+    df['Compte'] = df['Compte'].apply(lambda x: x if df['Nombre de mentions'][df['Compte'] == x].sum() > 10 else 'Autres')
     grouped = df.groupby('Compte')['Nombre de mentions'].sum().reset_index()
     
     fig, ax = plt.subplots()
@@ -77,13 +77,10 @@ plot_bar(tweets_per_week_filtered, 'Tweets par semaine')
 st.subheader("Tweets par mois")
 plot_full_bar(tweets_per_month_df, 'Tweets par mois')
 
-# 5. Graphique tweets_per_day_keywords (Barres verticales)
-st.subheader("Tweets avec mots-clés par jour")
-plot_full_bar(tweets_per_day_keywords_df, 'Tweets avec mots-clés par jour')
-
 # 6. Graphique tweets_per_week_keywords (Barres verticales)
 st.subheader("Tweets avec mots-clés par semaine")
-plot_full_bar(tweets_per_week_keywords_df, 'Tweets avec mots-clés par semaine')
+tweets_per_week_keywords_filtered = filter_low_values_day(tweets_per_week_keywords_df)
+plot_full_bar(tweets_per_week_keywords_filtered, 'Tweets avec mots-clés par semaine')
 
 # 7. Graphique tweets_per_month_keywords (Barres verticales)
 st.subheader("Tweets avec mots-clés par mois")
