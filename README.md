@@ -124,3 +124,18 @@ keyword_weights = {
 
 We chose Streamlit for the visualization because, for us, Streamlit is easier to use and learn.
 What's more, it's a Python language, so all we had to do was modify our code a little to add Streamlit visualization.
+
+## Bonus: Twitter Scraping and Optimization
+We implemented a scraping system using the real Twitter API to fetch the last 50 tweets and add them to our dataset. In addition to the basic scraping functionality, several optimizations were added:
+
+### Deduplication System:
+We ensured that no duplicate tweets are saved by checking each tweet's unique `id` before adding it to our dataset. If a tweet with the same `id` already exists in the dataset, it is skipped.
+
+### Batch Saving:
+To optimize performance, we implemented batch saving of tweets. Instead of saving each tweet immediately after retrieval, tweets are stored temporarily in memory and saved to a CSV file in batches. This reduces the overhead of frequent I/O operations and speeds up the process.
+
+### Debugging Messages:
+We included debugging messages to help monitor the process. These messages provide information on the number of tweets retrieved, whether duplicates are found, and whether data is saved successfully. Debug messages can be enabled or disabled based on the needs of the user (by toggling a debug flag).
+
+### Parallelizing API Requests:  
+Twitter's API rate limits and constraints made parallelizing requests difficult. Although we attempted to use threading and asynchronous programming to speed up data retrieval, the API's limitations on request frequency and authentication prevented meaningful gains. Instead, we adopted a carefully optimized sequential approach, ensuring adherence to Twitter’s rate limits while maintaining consistent and efficient data collection. 
