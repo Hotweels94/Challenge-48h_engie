@@ -25,6 +25,7 @@ To run this project, follow these steps:
     pip install streamlit
     pip install matplotlib
     pip install seaborn
+    pip install tweepy
     ```
     
 4. After installation, run the main script:
