@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from wordcloud import WordCloud
 from nltk.corpus import stopwords
-from collections import Counter
 import nltk
 
 nltk.download('stopwords')
@@ -66,8 +65,9 @@ def plot_inconfort_bar(df):
 def plot_sentiment_pie(df):
     sentiment_counts = df['sentiment'].value_counts()
     fig, ax = plt.subplots()
-    ax.pie(sentiment_counts, labels=sentiment_counts.index, autopct='%1.1f%%', startangle=90)
+    ax.pie(sentiment_counts,autopct='%1.1f%%', startangle=0)
     ax.axis('equal')
+    ax.legend(sentiment_counts.index, title="Sentiment", loc="upper right")  # Ajout de la légende
     st.pyplot(fig)
     st.write('Répartition des sentiments')
 
@@ -107,8 +107,9 @@ def plot_wordcloud(tweets_data):
     else:
         st.warning("Aucune donnée de tweet disponible pour générer le nuage de mots.")
 
-# Interface Streamlit
-st.title("Visualisation des KPIs")
+# Interface Streamlit améliorée
+st.title("Visualisation des KPIs d'Engie")
+st.markdown("## Analyse des interactions sur les réseaux sociaux")
 
 # Charger les CSV
 mentions_count_df = load_csv('mentions_count')
@@ -126,20 +127,23 @@ ai_analyze_df['categorie_reclamation'] = ai_analyze_df['categorie_reclamation'].
 # Filtrer les erreurs
 ai_analyze_df = ai_analyze_df[ai_analyze_df['sentiment'] != 'Erreur']
 
-# Graphiques existants
+# Filtres interactifs
+st.sidebar.header("Filtres interactifs")
+selected_period = st.sidebar.selectbox("Sélectionnez la période", ["Jour", "Semaine", "Mois"])
+
+# Application des filtres sur les données
+if selected_period == "Jour":
+    tweets_per_day_filtered = filter_low_values_day(tweets_per_day_df)
+    plot_bar(tweets_per_day_filtered, 'Tweets par jour')
+elif selected_period == "Semaine":
+    tweets_per_week_filtered = filter_low_values_week(tweets_per_week_df)
+    plot_bar(tweets_per_week_filtered, 'Tweets par semaine')
+else:
+    plot_bar(tweets_per_month_df, 'Tweets par mois')
+
+# Graphiques supplémentaires
 st.subheader("Mentions des comptes Engie")
 plot_pie(mentions_count_df, 'Mentions des comptes Engie')
-
-st.subheader("Tweets par jour")
-tweets_per_day_filtered = filter_low_values_day(tweets_per_day_df)
-plot_bar(tweets_per_day_filtered, 'Tweets par jour')
-
-st.subheader("Tweets par semaine")
-tweets_per_week_filtered = filter_low_values_week(tweets_per_week_df)
-plot_bar(tweets_per_week_filtered, 'Tweets par semaine')
-
-st.subheader("Tweets par mois")
-plot_bar(tweets_per_month_df, 'Tweets par mois')
 
 st.subheader("Tweets avec mots-clés par semaine")
 tweets_per_week_keywords_filtered = filter_low_values_day(tweets_per_week_keywords_df)
