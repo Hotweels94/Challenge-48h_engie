@@ -114,7 +114,7 @@ def analyze():
                     results = []  # Réinitialiser les résultats
                     print("💾 Sauvegarde intermédiaire effectuée.")
 
-                time.sleep(2)  # Pause pour éviter surcharge API
+                time.sleep(4)  # Pause pour éviter surcharge API
 
         # Dernière sauvegarde après la boucle
         if results:
