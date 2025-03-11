@@ -119,3 +119,7 @@ keyword_weights = {
 ```
 ---
 
+## Technological choices for visualization
+
+We chose Streamlit for the visualization because, for us, Streamlit is easier to use and learn.
+What's more, it's a Python language, so all we had to do was modify our code a little to add Streamlit visualization.
